@@ -2,62 +2,76 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Robotica - Christian Caruso</title>
     <script src="https://cloudflare.com"></script>
     <style>
         body, html { margin: 0; padding: 0; overflow: hidden; background: #000; font-family: 'Orbitron', sans-serif; }
+        
+        /* Overlay iniziale */
         #intro {
             position: fixed; width: 100%; height: 100%; display: flex; 
             flex-direction: column; justify-content: center; align-items: center;
-            z-index: 100; transition: all 1.2s ease-in-out;
+            z-index: 100; transition: all 1.5s cubic-bezier(0.7, 0, 0.3, 1);
             background: radial-gradient(circle, #1e293b 0%, #000 100%);
         }
-        .hide { opacity: 0; transform: translateY(-100%); pointer-events: none; }
-        h1 { color: #fff; font-size: 3.5rem; letter-spacing: 10px; text-shadow: 0 0 20px #38bdf8; }
-        button {
+
+        .hide { opacity: 0; transform: scale(2) rotate(5deg); pointer-events: none; }
+
+        h2 { color: #38bdf8; letter-spacing: 5px; font-size: 1rem; opacity: 0.8; }
+        h1 { color: #fff; font-size: 4rem; text-transform: uppercase; letter-spacing: 12px; margin: 20px 0; text-shadow: 0 0 30px #38bdf8; }
+        
+        #btn-presenta {
             background: transparent; border: 2px solid #38bdf8; color: #38bdf8;
-            padding: 15px 50px; font-size: 1.2rem; cursor: pointer; transition: 0.3s;
+            padding: 20px 60px; font-size: 1.5rem; font-weight: bold; cursor: pointer;
+            transition: 0.4s; position: relative; overflow: hidden;
         }
-        button:hover { background: #38bdf8; color: #000; box-shadow: 0 0 30px #38bdf8; }
+        #btn-presenta:hover { background: #38bdf8; color: #000; box-shadow: 0 0 50px #38bdf8; }
+
+        /* Scrittura Finale */
         #ed-fisica {
-            position: fixed; top: 10%; width: 100%; text-align: center;
-            color: #38bdf8; font-size: 5rem; font-weight: 900; opacity: 0;
-            transition: 2s ease; z-index: 50; letter-spacing: 10px;
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            color: #fff; font-size: 6rem; font-weight: 900; opacity: 0;
+            z-index: 50; pointer-events: none; text-shadow: 0 0 20px #38bdf8;
+            transition: opacity 2s ease; letter-spacing: 15px;
         }
+
+        #canvas-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
     </style>
     <link href="https://googleapis.com" rel="stylesheet">
 </head>
 <body>
 
     <div id="intro">
-        <h2 style="color:#38bdf8; opacity:0.6;">CHRISTIAN CARUSO PRODUCTION PRESENTA</h2>
+        <h2>CHRISTIAN CARUSO PRODUCTION PRESENTA</h2>
         <h1>LA ROBOTICA</h1>
-        <button onclick="trasformazione()">PRESENTA</button>
+        <button id="btn-presenta" onclick="triggerAnimation()">PRESENTA</button>
     </div>
 
     <div id="ed-fisica">ED. FISICA</div>
     <div id="canvas-container"></div>
 
-    <script>
-        let scene, camera, renderer, armGroup, armSolid, armWire;
+    <!-- Audio incorporati (Suoni futuristici e meccanici) -->
+    <audio id="sound-whoosh" src="https://mixkit.co"></audio>
+    <audio id="sound-transform" src="https://mixkit.co"></audio>
 
-        function trasformazione() {
+    <script>
+        let scene, camera, renderer, arm, particles;
+
+        function triggerAnimation() {
+            // 1. Audio
+            document.getElementById('sound-whoosh').play();
+            setTimeout(() => { document.getElementById('sound-transform').play(); }, 500);
+
+            // 2. Sparisce la intro
             document.getElementById('intro').classList.add('hide');
-            init3D();
-            
-            // Avvia la transizione "Scheda Madre" dopo 2 secondi
+
+            // 3. Appare il testo finale con ritardo
             setTimeout(() => {
-                let val = 1;
-                const interval = setInterval(() => {
-                    val -= 0.05;
-                    armSolid.material.opacity = val;
-                    armWire.material.opacity = 1 - val;
-                    if(val <= 0) {
-                        clearInterval(interval);
-                        document.getElementById('ed-fisica').style.opacity = "1";
-                    }
-                }, 50);
-            }, 2000);
+                document.getElementById('ed-fisica').style.opacity = "1";
+            }, 3500);
+
+            init3D();
         }
 
         function init3D() {
@@ -67,47 +81,53 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
             document.getElementById('canvas-container').appendChild(renderer.domElement);
 
-            armGroup = new THREE.Group();
-
-            // 1. LA PROTESI (Modello Solido)
-            const geometry = new THREE.CylinderGeometry(0.5, 0.3, 4, 32);
-            const materialSolid = new THREE.MeshPhongMaterial({ 
-                color: 0xcccccc, 
-                transparent: true, 
-                opacity: 1,
-                shininess: 100 
-            });
-            armSolid = new THREE.Mesh(geometry, materialSolid);
-            
-            // 2. LA SCHEDA MADRE (Modello Wireframe/Circuiti)
-            const materialWire = new THREE.MeshBasicMaterial({ 
+            // Creazione Braccio (Cilindro con Texture a Circuito)
+            const geometry = new THREE.CylinderGeometry(0.8, 0.5, 4, 32);
+            const material = new THREE.MeshPhongMaterial({ 
                 color: 0x38bdf8, 
                 wireframe: true, 
-                transparent: true, 
-                opacity: 0 
+                emissive: 0x112244 
             });
-            armWire = new THREE.Mesh(geometry, materialWire);
+            arm = new THREE.Mesh(geometry, material);
+            scene.add(arm);
 
-            armGroup.add(armSolid);
-            armGroup.add(armWire);
-            scene.add(armGroup);
+            // Particelle (Effetto atmosfera futuristica)
+            const partGeom = new THREE.BufferGeometry();
+            const partCount = 1000;
+            const posArray = new Float32Array(partCount * 3);
+            for(let i=0; i<partCount*3; i++) { posArray[i] = (Math.random() - 0.5) * 10; }
+            partGeom.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+            const partMat = new THREE.PointsMaterial({ size: 0.02, color: 0xffffff });
+            particles = new THREE.Points(partGeom, partMat);
+            scene.add(particles);
 
-            // Luci e Posizione
-            const light = new THREE.DirectionalLight(0xffffff, 1);
-            light.position.set(5, 5, 5);
+            // Luci
+            const light = new THREE.PointLight(0x38bdf8, 2, 50);
+            light.position.set(2, 2, 5);
             scene.add(light);
-            scene.add(new THREE.AmbientLight(0x404040));
-            
-            camera.position.z = 6;
+
+            camera.position.z = 10; // Parte da lontano
             animate();
         }
 
         function animate() {
             requestAnimationFrame(animate);
-            armGroup.rotation.y += 0.01;
-            armGroup.rotation.x += 0.005;
+            
+            // Animazione braccio: rotazione e zoom-in verso la "scheda madre"
+            arm.rotation.y += 0.01;
+            if(camera.position.z > 2.5) camera.position.z -= 0.05; // Zoom cinematografico
+            
+            particles.rotation.y += 0.001;
+            
             renderer.render(scene, camera);
         }
+
+        // Adatta al ridimensionamento finestra
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
     </script>
 </body>
 </html>
