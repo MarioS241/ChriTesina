@@ -3,86 +3,102 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tesina sulla Robotica - Christian Caruso</title>
+    <title>Tesina Robotica - Christian Caruso</title>
+    <script src="https://cloudflare.com"></script>
     <style>
-        /* Sfondo scuro e font moderno */
-        body {
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background-color: #0f172a; /* Blu scuro notte */
-            color: white;
-            font-family: 'Segoe UI', Roboto, sans-serif;
-            text-align: center;
+        body, html { margin: 0; padding: 0; overflow: hidden; background: #0f172a; font-family: 'Segoe UI', sans-serif; }
+        
+        /* Schermata Iniziale */
+        #start-screen {
+            position: fixed; width: 100%; height: 100%; display: flex; 
+            flex-direction: column; justify-content: center; align-items: center;
+            z-index: 10; transition: opacity 1.5s ease, transform 1.5s ease;
+            background: radial-gradient(circle, #1e293b 0%, #0f172a 100%);
         }
 
-        /* Box centrale */
-        .container {
-            border: 2px solid #38bdf8; /* Azzurro robotica */
-            padding: 50px;
-            border-radius: 30px;
-            background: rgba(30, 41, 59, 0.5);
-            box-shadow: 0 0 30px rgba(56, 189, 248, 0.3);
-            backdrop-filter: blur(10px);
-        }
+        .fade-out { opacity: 0; transform: scale(1.5); pointer-events: none; }
 
-        h2 {
-            font-weight: 300;
-            letter-spacing: 2px;
-            color: #94a3b8;
-            margin-bottom: 5px;
-            font-size: 1.2rem;
-        }
-
-        h1 {
-            font-size: 3.5rem;
-            margin-bottom: 40px;
-            color: #38bdf8;
-            text-transform: uppercase;
-            letter-spacing: 8px;
-            text-shadow: 0 0 10px rgba(56, 189, 248, 0.8);
-        }
-
-        /* Bottone interattivo */
+        h2 { color: #94a3b8; letter-spacing: 2px; font-weight: 300; }
+        h1 { color: #38bdf8; font-size: 3.5rem; text-transform: uppercase; letter-spacing: 8px; text-shadow: 0 0 20px rgba(56,189,248,0.5); }
+        
         button {
-            background-color: #38bdf8;
-            color: #0f172a;
-            border: none;
-            padding: 18px 50px;
-            font-size: 1.3rem;
-            font-weight: bold;
-            border-radius: 50px;
-            cursor: pointer;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            text-transform: uppercase;
-            letter-spacing: 2px;
+            background: #38bdf8; border: none; padding: 15px 40px; font-size: 1.2rem;
+            font-weight: bold; border-radius: 50px; cursor: pointer; transition: 0.3s;
         }
+        button:hover { transform: scale(1.1); box-shadow: 0 0 20px #38bdf8; }
 
-        button:hover {
-            background-color: #7dd3fc;
-            transform: scale(1.15);
-            box-shadow: 0 0 25px #38bdf8;
+        /* Schermata 3D e Testo Finale */
+        #container-3d { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+        
+        #final-text {
+            position: fixed; bottom: 10%; width: 100%; text-align: center;
+            color: #38bdf8; font-size: 4rem; font-weight: bold; opacity: 0;
+            transition: opacity 2s ease 3s; /* Appare dopo 3 secondi dall'inizio della transizione */
+            z-index: 5; text-shadow: 0 0 15px rgba(56,189,248,1);
+            pointer-events: none;
         }
+        .show-text { opacity: 1 !important; }
     </style>
 </head>
 <body>
 
-    <div class="container">
+    <div id="start-screen">
         <h2>Christian Caruso Production presenta...</h2>
         <h1>LA ROBOTICA</h1>
-        <button onclick="avvia()">PRESENTA</button>
+        <button onclick="iniziaPresentazione()">PRESENTA</button>
     </div>
 
+    <div id="final-text">ED FISICA</div>
+    <div id="container-3d"></div>
+
     <script>
-        function avvia() {
-            // Qui puoi cambiare 'indice.html' con il nome della pagina successiva
-            alert("Inizio presentazione della tesina!");
-            // window.location.href = "pagina_successiva.html"; 
+        // Funzione per avviare l'animazione e il suono
+        function iniziaPresentazione() {
+            // 1. Far sparire la schermata iniziale
+            document.getElementById('start-screen').classList.add('fade-out');
+            document.getElementById('final-text').classList.add('show-text');
+
+            // 2. Suono futuristico (usa un URL di un file mp3 se ne hai uno)
+            const audio = new Audio('https://soundjay.com'); 
+            audio.play();
+
+            // 3. Avvia la scena 3D
+            init3D();
+        }
+
+        function init3D() {
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.getElementById('container-3d').appendChild(renderer.domElement);
+
+            // Luce per vedere il modello
+            const light = new THREE.DirectionalLight(0xffffff, 1);
+            light.position.set(1, 1, 2).normalize();
+            scene.add(light);
+            scene.add(new THREE.AmbientLight(0x404040));
+
+            // CREAZIONE DI UN BRACCIO MECCANICO SEMPLIFICATO (BOX 3D)
+            // In una tesina vera, qui caricheresti un modello .gltf di un bambino
+            const geometry = new THREE.BoxGeometry(1, 4, 1);
+            const material = new THREE.MeshPhongMaterial({ 
+                color: 0x38bdf8, 
+                wireframe: true // Effetto "scheda madre/digitale"
+            });
+            const arm = new THREE.Mesh(geometry, material);
+            scene.add(arm);
+
+            camera.position.z = 5;
+
+            function animate() {
+                requestAnimationFrame(animate);
+                arm.rotation.y += 0.01; // Il braccio ruota lentamente
+                arm.rotation.x += 0.005;
+                renderer.render(scene, camera);
+            }
+            animate();
         }
     </script>
-
 </body>
 </html>
