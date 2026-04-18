@@ -3,131 +3,808 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Robotica - Christian Caruso</title>
-    <script src="https://cloudflare.com"></script>
+    <title>Tesina Robotica - Christian Caruso</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
-        body, html { margin: 0; padding: 0; overflow: hidden; background: #000; font-family: 'Orbitron', sans-serif; }
-        
-        /* Overlay iniziale */
-        #intro {
-            position: fixed; width: 100%; height: 100%; display: flex; 
-            flex-direction: column; justify-content: center; align-items: center;
-            z-index: 100; transition: all 1.5s cubic-bezier(0.7, 0, 0.3, 1);
-            background: radial-gradient(circle, #1e293b 0%, #000 100%);
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600&display=swap');
+
+        :root {
+            --neon: #38bdf8;
+            --neon2: #0ea5e9;
+            --glow: rgba(56,189,248,0.5);
+            --dark: #0f172a;
+            --darker: #060d1a;
+            --mid: #1e293b;
+            --green: #4ade80;
+            --orange: #fb923c;
         }
 
-        .hide { opacity: 0; transform: scale(2) rotate(5deg); pointer-events: none; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
-        h2 { color: #38bdf8; letter-spacing: 5px; font-size: 1rem; opacity: 0.8; }
-        h1 { color: #fff; font-size: 4rem; text-transform: uppercase; letter-spacing: 12px; margin: 20px 0; text-shadow: 0 0 30px #38bdf8; }
-        
-        #btn-presenta {
-            background: transparent; border: 2px solid #38bdf8; color: #38bdf8;
-            padding: 20px 60px; font-size: 1.5rem; font-weight: bold; cursor: pointer;
-            transition: 0.4s; position: relative; overflow: hidden;
-        }
-        #btn-presenta:hover { background: #38bdf8; color: #000; box-shadow: 0 0 50px #38bdf8; }
-
-        /* Scrittura Finale */
-        #ed-fisica {
-            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            color: #fff; font-size: 6rem; font-weight: 900; opacity: 0;
-            z-index: 50; pointer-events: none; text-shadow: 0 0 20px #38bdf8;
-            transition: opacity 2s ease; letter-spacing: 15px;
+        body, html {
+            overflow: hidden;
+            background: var(--darker);
+            font-family: 'Exo 2', sans-serif;
+            height: 100%; width: 100%;
         }
 
-        #canvas-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        /* ───── GRID BACKGROUND ───── */
+        body::before {
+            content: '';
+            position: fixed; inset: 0;
+            background-image:
+                linear-gradient(rgba(56,189,248,0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(56,189,248,0.04) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none; z-index: 0;
+            animation: gridPulse 8s ease-in-out infinite;
+        }
+        @keyframes gridPulse {
+            0%,100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
+        /* ───── SCAN LINE ───── */
+        body::after {
+            content: '';
+            position: fixed; top: -100%; left: 0;
+            width: 100%; height: 4px;
+            background: linear-gradient(transparent, var(--neon), transparent);
+            opacity: 0.3;
+            animation: scanLine 6s linear infinite;
+            pointer-events: none; z-index: 100;
+        }
+        @keyframes scanLine {
+            0% { top: -1%; }
+            100% { top: 101%; }
+        }
+
+        /* ───── START SCREEN ───── */
+        #start-screen {
+            position: fixed; inset: 0;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center; gap: 24px;
+            z-index: 10;
+            transition: opacity 1.8s ease, transform 1.8s ease;
+            background: radial-gradient(ellipse at center, #1e293b 0%, var(--darker) 70%);
+        }
+
+        .subtitle {
+            color: #64748b;
+            font-family: 'Exo 2', sans-serif;
+            font-weight: 300;
+            letter-spacing: 4px;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            animation: fadeInUp 1s ease 0.3s both;
+        }
+
+        h1 {
+            font-family: 'Orbitron', monospace;
+            color: var(--neon);
+            font-size: clamp(2.5rem, 6vw, 5rem);
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 12px;
+            text-shadow: 0 0 30px var(--glow), 0 0 60px rgba(56,189,248,0.2);
+            animation: fadeInUp 1s ease 0.6s both, neonFlicker 4s ease 1.6s infinite;
+        }
+
+        @keyframes neonFlicker {
+            0%,100% { text-shadow: 0 0 30px var(--glow), 0 0 60px rgba(56,189,248,0.2); }
+            92% { text-shadow: 0 0 30px var(--glow), 0 0 60px rgba(56,189,248,0.2); }
+            93% { text-shadow: none; }
+            94% { text-shadow: 0 0 30px var(--glow), 0 0 60px rgba(56,189,248,0.2); }
+            96% { text-shadow: none; }
+            97% { text-shadow: 0 0 30px var(--glow), 0 0 60px rgba(56,189,248,0.2); }
+        }
+
+        .divider {
+            width: 200px; height: 1px;
+            background: linear-gradient(90deg, transparent, var(--neon), transparent);
+            animation: fadeInUp 1s ease 0.9s both;
+        }
+
+        .tagline {
+            color: #94a3b8;
+            font-size: 0.85rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            animation: fadeInUp 1s ease 1.1s both;
+        }
+
+        #btn-start {
+            margin-top: 16px;
+            background: transparent;
+            border: 1px solid var(--neon);
+            color: var(--neon);
+            padding: 14px 50px;
+            font-family: 'Orbitron', monospace;
+            font-size: 0.9rem;
+            font-weight: 700;
+            letter-spacing: 5px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: color 0.3s, box-shadow 0.3s;
+            animation: fadeInUp 1s ease 1.4s both;
+            clip-path: polygon(12px 0%, 100% 0%, calc(100% - 12px) 100%, 0% 100%);
+        }
+        #btn-start::before {
+            content: '';
+            position: absolute; inset: 0;
+            background: var(--neon);
+            transform: translateX(-105%);
+            transition: transform 0.3s ease;
+            z-index: -1;
+        }
+        #btn-start:hover::before { transform: translateX(0); }
+        #btn-start:hover {
+            color: var(--darker);
+            box-shadow: 0 0 30px var(--glow);
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-out {
+            opacity: 0 !important;
+            transform: scale(1.3) !important;
+            pointer-events: none;
+        }
+
+        /* ───── 3D CONTAINER ───── */
+        #container-3d {
+            position: fixed; inset: 0;
+            z-index: 1;
+        }
+
+        /* ───── CORNER DECORATIONS ───── */
+        .corner {
+            position: fixed;
+            width: 40px; height: 40px;
+            opacity: 0;
+            transition: opacity 1s ease 2s;
+            z-index: 6;
+        }
+        .corner.show { opacity: 1; }
+        .corner-tl { top: 20px; left: 20px; border-top: 2px solid var(--neon); border-left: 2px solid var(--neon); }
+        .corner-tr { top: 20px; right: 20px; border-top: 2px solid var(--neon); border-right: 2px solid var(--neon); }
+        .corner-bl { bottom: 20px; left: 20px; border-bottom: 2px solid var(--neon); border-left: 2px solid var(--neon); }
+        .corner-br { bottom: 20px; right: 20px; border-bottom: 2px solid var(--neon); border-right: 2px solid var(--neon); }
+
+        /* ───── HUD OVERLAYS ───── */
+        #hud-left {
+            position: fixed; left: 30px; top: 50%;
+            transform: translateY(-50%);
+            display: flex; flex-direction: column; gap: 8px;
+            opacity: 0; transition: opacity 1s ease 2.5s;
+            z-index: 6;
+        }
+        #hud-left.show { opacity: 1; }
+
+        .hud-line {
+            display: flex; align-items: center; gap: 10px;
+            color: #475569; font-size: 0.7rem; letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        .hud-line::before {
+            content: '';
+            width: 20px; height: 1px;
+            background: var(--neon); opacity: 0.5;
+        }
+        .hud-bar {
+            width: 3px; height: 80px;
+            background: linear-gradient(to bottom, var(--neon), transparent);
+            opacity: 0.3;
+        }
+
+        /* ───── BOTTOM TEXT ───── */
+        #final-text {
+            position: fixed; bottom: 8%; width: 100%;
+            text-align: center;
+            font-family: 'Orbitron', monospace;
+            color: var(--neon);
+            font-size: clamp(1.5rem, 5vw, 3.5rem);
+            font-weight: 900;
+            letter-spacing: 10px;
+            opacity: 0;
+            transition: opacity 2s ease;
+            z-index: 5;
+            text-shadow: 0 0 20px var(--glow);
+            pointer-events: none;
+        }
+        #final-text.show { opacity: 1; }
+
+        /* ───── CAPTION ───── */
+        #caption {
+            position: fixed; bottom: 4%; width: 100%;
+            text-align: center;
+            font-family: 'Exo 2', sans-serif;
+            color: #64748b;
+            font-size: 0.75rem;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            opacity: 0;
+            transition: opacity 2s ease 1s;
+            z-index: 5;
+            pointer-events: none;
+        }
+        #caption.show { opacity: 1; }
+
+        /* ───── PHASE INDICATOR ───── */
+        #phase-indicator {
+            position: fixed; top: 30px; left: 50%;
+            transform: translateX(-50%);
+            font-family: 'Orbitron', monospace;
+            color: #334155;
+            font-size: 0.65rem;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            opacity: 0;
+            transition: opacity 0.5s;
+            z-index: 6;
+        }
+        #phase-indicator.show { opacity: 1; }
     </style>
-    <link href="https://googleapis.com" rel="stylesheet">
 </head>
 <body>
 
-    <div id="intro">
-        <h2>CHRISTIAN CARUSO PRODUCTION PRESENTA</h2>
+    <!-- Schermata iniziale -->
+    <div id="start-screen">
+        <p class="subtitle">Christian Caruso Production presenta</p>
         <h1>LA ROBOTICA</h1>
-        <button id="btn-presenta" onclick="triggerAnimation()">PRESENTA</button>
+        <div class="divider"></div>
+        <p class="tagline">Protesi & Tecnologia &mdash; Tesina di Fine Anno</p>
+        <button id="btn-start" onclick="iniziaPresentazione()">PRESENTA</button>
     </div>
 
-    <div id="ed-fisica">ED. FISICA</div>
-    <div id="canvas-container"></div>
+    <!-- Angoli decorativi -->
+    <div class="corner corner-tl"></div>
+    <div class="corner corner-tr"></div>
+    <div class="corner corner-bl"></div>
+    <div class="corner corner-br"></div>
 
-    <!-- Audio incorporati (Suoni futuristici e meccanici) -->
-    <audio id="sound-whoosh" src="https://mixkit.co"></audio>
-    <audio id="sound-transform" src="https://mixkit.co"></audio>
+    <!-- HUD laterale -->
+    <div id="hud-left">
+        <div class="hud-bar"></div>
+        <div class="hud-line">Robotica</div>
+        <div class="hud-line">Protesi</div>
+        <div class="hud-line">Ed. Fisica</div>
+        <div class="hud-bar"></div>
+    </div>
+
+    <div id="phase-indicator">// INIZIALIZZAZIONE SISTEMA</div>
+    <div id="final-text">EDUCAZIONE FISICA</div>
+    <div id="caption">Robotica applicata alla vita &mdash; protesi bioniche per bambini</div>
+    <div id="container-3d"></div>
 
     <script>
-        let scene, camera, renderer, arm, particles;
+    // ─── STATO ───
+    let scene, camera, renderer, animId;
+    let phase = 0; // 0=scheda madre, 1=zoom-out braccio, 2=corpo intero
+    let phaseTimer = 0;
+    let motherboardGroup, armGroup, bodyGroup;
+    let clock;
 
-        function triggerAnimation() {
-            // 1. Audio
-            document.getElementById('sound-whoosh').play();
-            setTimeout(() => { document.getElementById('sound-transform').play(); }, 500);
-
-            // 2. Sparisce la intro
-            document.getElementById('intro').classList.add('hide');
-
-            // 3. Appare il testo finale con ritardo
-            setTimeout(() => {
-                document.getElementById('ed-fisica').style.opacity = "1";
-            }, 3500);
-
+    function iniziaPresentazione() {
+        document.getElementById('start-screen').classList.add('fade-out');
+        setTimeout(() => {
+            // Mostra HUD
+            document.querySelectorAll('.corner').forEach(c => c.classList.add('show'));
+            document.getElementById('hud-left').classList.add('show');
+            document.getElementById('phase-indicator').classList.add('show');
             init3D();
-        }
+        }, 1200);
+    }
 
-        function init3D() {
-            scene = new THREE.Scene();
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-            renderer = new THREE.WebGLRenderer({ antialias: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            document.getElementById('canvas-container').appendChild(renderer.domElement);
+    function init3D() {
+        clock = new THREE.Clock();
+        scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x060d1a, 0.08);
 
-            // Creazione Braccio (Cilindro con Texture a Circuito)
-            const geometry = new THREE.CylinderGeometry(0.8, 0.5, 4, 32);
-            const material = new THREE.MeshPhongMaterial({ 
-                color: 0x38bdf8, 
-                wireframe: true, 
-                emissive: 0x112244 
-            });
-            arm = new THREE.Mesh(geometry, material);
-            scene.add(arm);
+        camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 200);
+        camera.position.set(0, 0, 4); // Vicino alla scheda madre
 
-            // Particelle (Effetto atmosfera futuristica)
-            const partGeom = new THREE.BufferGeometry();
-            const partCount = 1000;
-            const posArray = new Float32Array(partCount * 3);
-            for(let i=0; i<partCount*3; i++) { posArray[i] = (Math.random() - 0.5) * 10; }
-            partGeom.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
-            const partMat = new THREE.PointsMaterial({ size: 0.02, color: 0xffffff });
-            particles = new THREE.Points(partGeom, partMat);
-            scene.add(particles);
+        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        document.getElementById('container-3d').appendChild(renderer.domElement);
 
-            // Luci
-            const light = new THREE.PointLight(0x38bdf8, 2, 50);
-            light.position.set(2, 2, 5);
-            scene.add(light);
+        // ─── LUCI ───
+        scene.add(new THREE.AmbientLight(0x0f2040, 2));
 
-            camera.position.z = 10; // Parte da lontano
-            animate();
-        }
+        const dirLight = new THREE.DirectionalLight(0x38bdf8, 3);
+        dirLight.position.set(2, 4, 3);
+        scene.add(dirLight);
 
-        function animate() {
-            requestAnimationFrame(animate);
-            
-            // Animazione braccio: rotazione e zoom-in verso la "scheda madre"
-            arm.rotation.y += 0.01;
-            if(camera.position.z > 2.5) camera.position.z -= 0.05; // Zoom cinematografico
-            
-            particles.rotation.y += 0.001;
-            
-            renderer.render(scene, camera);
-        }
+        const rimLight = new THREE.DirectionalLight(0x4ade80, 1);
+        rimLight.position.set(-3, -1, -2);
+        scene.add(rimLight);
 
-        // Adatta al ridimensionamento finestra
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
+        const pointLight = new THREE.PointLight(0x38bdf8, 5, 20);
+        pointLight.position.set(0, 0, 3);
+        scene.add(pointLight);
+
+        // ─── FASE 1: SCHEDA MADRE ───
+        motherboardGroup = createMotherboard();
+        scene.add(motherboardGroup);
+
+        // ─── FASE 2: BRACCIO MECCANICO (inizialmente nascosto) ───
+        armGroup = createProsteticArm();
+        armGroup.visible = false;
+        scene.add(armGroup);
+
+        // ─── FASE 3: CORPO BAMBINO (inizialmente nascosto) ───
+        bodyGroup = createChildBody();
+        bodyGroup.visible = false;
+        scene.add(bodyGroup);
+
+        // ─── PARTICELLE FLUTTUANTI ───
+        createParticles();
+
+        animate();
+        schedulePhases();
+    }
+
+    // ─────────────────────────────────────────
+    // SCHEDA MADRE
+    // ─────────────────────────────────────────
+    function createMotherboard() {
+        const group = new THREE.Group();
+
+        const neon = 0x38bdf8;
+        const green = 0x4ade80;
+        const orange = 0xfb923c;
+
+        // PCB base
+        const pcbGeo = new THREE.BoxGeometry(3.6, 2.6, 0.08);
+        const pcbMat = new THREE.MeshPhongMaterial({ color: 0x0d2a1a, shininess: 80 });
+        const pcb = new THREE.Mesh(pcbGeo, pcbMat);
+        group.add(pcb);
+
+        // Circuiti (linee sul PCB)
+        const traceMat = new THREE.LineBasicMaterial({ color: neon, linewidth: 1 });
+        const traces = [
+            [[-1.6,1.1,0.05], [-1.6,-0.3,0.05], [-0.5,-0.3,0.05]],
+            [[1.6,1.1,0.05], [1.6,-0.5,0.05], [0.2,-0.5,0.05], [0.2,-1.1,0.05]],
+            [[-0.8,1.1,0.05], [-0.8,0.4,0.05], [0.8,0.4,0.05], [0.8,-0.6,0.05]],
+            [[0,-1.1,0.05], [0,-0.2,0.05], [-1,- 0.2,0.05]],
+        ];
+        traces.forEach(pts => {
+            const geo = new THREE.BufferGeometry().setFromPoints(pts.map(p => new THREE.Vector3(...p)));
+            group.add(new THREE.Line(geo, traceMat));
         });
+
+        // Chip principale (CPU)
+        const cpuGeo = new THREE.BoxGeometry(0.7, 0.7, 0.12);
+        const cpuMat = new THREE.MeshPhongMaterial({ color: 0x1a1a2e, shininess: 120, specular: 0x38bdf8 });
+        const cpu = new THREE.Mesh(cpuGeo, cpuMat);
+        cpu.position.set(0, 0.2, 0.1);
+        group.add(cpu);
+
+        // Grigliato chip
+        const gridMat = new THREE.LineBasicMaterial({ color: neon, linewidth: 1 });
+        for (let i = -2; i <= 2; i++) {
+            const hGeo = new THREE.BufferGeometry().setFromPoints([
+                new THREE.Vector3(-0.3, i * 0.12 + 0.2, 0.17),
+                new THREE.Vector3(0.3, i * 0.12 + 0.2, 0.17)
+            ]);
+            group.add(new THREE.Line(hGeo, gridMat));
+            const vGeo = new THREE.BufferGeometry().setFromPoints([
+                new THREE.Vector3(i * 0.12, -0.15, 0.17),
+                new THREE.Vector3(i * 0.12, 0.55, 0.17)
+            ]);
+            group.add(new THREE.Line(vGeo, gridMat));
+        }
+
+        // Condensatori
+        [[- 1.2, 0.8], [-1.2, 0.5], [-1.2, 0.2], [1.3, 0.7], [1.3, 0.4]].forEach(([x, y]) => {
+            const capGeo = new THREE.CylinderGeometry(0.06, 0.06, 0.25, 8);
+            const capMat = new THREE.MeshPhongMaterial({ color: orange });
+            const cap = new THREE.Mesh(capGeo, capMat);
+            cap.position.set(x, y, 0.12);
+            group.add(cap);
+        });
+
+        // Slot RAM
+        [[-0.3, -0.7], [0.2, -0.7], [0.7, -0.7]].forEach(([x, y]) => {
+            const slotGeo = new THREE.BoxGeometry(0.08, 0.55, 0.15);
+            const slotMat = new THREE.MeshPhongMaterial({ color: 0x1e3a5f });
+            const slot = new THREE.Mesh(slotGeo, slotMat);
+            slot.position.set(x, y, 0.1);
+            group.add(slot);
+        });
+
+        // LED lampeggianti (sfere verdi)
+        const ledPositions = [[-1.5, -0.9], [1.4, -0.9], [-1.5, 1.0], [1.4, 1.0]];
+        ledPositions.forEach(([x, y], i) => {
+            const ledGeo = new THREE.SphereGeometry(0.04, 8, 8);
+            const ledMat = new THREE.MeshPhongMaterial({
+                color: green, emissive: green, emissiveIntensity: 2
+            });
+            const led = new THREE.Mesh(ledGeo, ledMat);
+            led.position.set(x, y, 0.1);
+            led.userData = { isLed: true, offset: i * 0.5 };
+            group.add(led);
+        });
+
+        // Bordo wireframe
+        const edgeGeo = new THREE.EdgesGeometry(pcbGeo);
+        const edgeMat = new THREE.LineBasicMaterial({ color: neon, linewidth: 2 });
+        group.add(new THREE.LineSegments(edgeGeo, edgeMat));
+
+        return group;
+    }
+
+    // ─────────────────────────────────────────
+    // BRACCIO PROSTETICO
+    // ─────────────────────────────────────────
+    function createProsteticArm() {
+        const group = new THREE.Group();
+        const neon = 0x38bdf8;
+        const metal = new THREE.MeshPhongMaterial({ color: 0x1e3a5f, shininess: 200, specular: 0x38bdf8 });
+        const accent = new THREE.MeshPhongMaterial({ color: neon, emissive: neon, emissiveIntensity: 0.3, shininess: 300 });
+        const dark = new THREE.MeshPhongMaterial({ color: 0x0f1f2e, shininess: 60 });
+
+        // ─ SPALLA ─
+        const shoulderGeo = new THREE.SphereGeometry(0.35, 16, 16);
+        const shoulder = new THREE.Mesh(shoulderGeo, metal);
+        shoulder.position.set(0, 1.8, 0);
+        group.add(shoulder);
+
+        // ─ AVAMBRACCIO SUPERIORE ─
+        const upperArmGeo = new THREE.CylinderGeometry(0.22, 0.18, 1.0, 12);
+        const upperArm = new THREE.Mesh(upperArmGeo, metal);
+        upperArm.position.set(0, 1.1, 0);
+        group.add(upperArm);
+
+        // Circuiti sull'avambraccio
+        const lineMatArm = new THREE.LineBasicMaterial({ color: neon });
+        for (let i = 0; i < 4; i++) {
+            const angle = (i / 4) * Math.PI * 2;
+            const stripGeo = new THREE.BufferGeometry().setFromPoints([
+                new THREE.Vector3(Math.cos(angle) * 0.23, 0.6, Math.sin(angle) * 0.23),
+                new THREE.Vector3(Math.cos(angle) * 0.23, 1.6, Math.sin(angle) * 0.23)
+            ]);
+            group.add(new THREE.Line(stripGeo, lineMatArm));
+        }
+
+        // ─ GOMITO ─
+        const elbowGeo = new THREE.SphereGeometry(0.22, 12, 12);
+        const elbow = new THREE.Mesh(elbowGeo, accent);
+        elbow.position.set(0, 0.55, 0);
+        group.add(elbow);
+
+        // ─ AVAMBRACCIO INFERIORE ─
+        const lowerArmGeo = new THREE.CylinderGeometry(0.17, 0.14, 0.9, 12);
+        const lowerArm = new THREE.Mesh(lowerArmGeo, dark);
+        lowerArm.position.set(0, 0.05, 0);
+        group.add(lowerArm);
+
+        // Pannelli laterali braccio
+        [0, Math.PI / 2, Math.PI, Math.PI * 1.5].forEach(angle => {
+            const panGeo = new THREE.BoxGeometry(0.06, 0.7, 0.08);
+            const pan = new THREE.Mesh(panGeo, accent);
+            pan.position.set(Math.cos(angle) * 0.2, 0.05, Math.sin(angle) * 0.2);
+            pan.rotation.y = angle;
+            group.add(pan);
+        });
+
+        // ─ POLSO ─
+        const wristGeo = new THREE.CylinderGeometry(0.15, 0.13, 0.2, 12);
+        const wrist = new THREE.Mesh(wristGeo, accent);
+        wrist.position.set(0, -0.45, 0);
+        group.add(wrist);
+
+        // ─ MANO / DITA ─
+        const palmGeo = new THREE.BoxGeometry(0.35, 0.15, 0.28);
+        const palm = new THREE.Mesh(palmGeo, metal);
+        palm.position.set(0, -0.62, 0);
+        group.add(palm);
+
+        // Dita (4 dita meccaniche)
+        [[-0.13, 0], [-0.04, 0], [0.05, 0], [0.14, 0]].forEach(([dx, dz]) => {
+            for (let seg = 0; seg < 3; seg++) {
+                const fGeo = new THREE.BoxGeometry(0.06, 0.13, 0.06);
+                const fMat = seg % 2 === 0 ? metal : accent;
+                const finger = new THREE.Mesh(fGeo, fMat);
+                finger.position.set(dx, -0.76 - seg * 0.14, dz);
+                group.add(finger);
+            }
+        });
+
+        // Pollice
+        const thumbGeo = new THREE.BoxGeometry(0.06, 0.1, 0.06);
+        const thumb = new THREE.Mesh(thumbGeo, metal);
+        thumb.position.set(0.22, -0.65, 0.04);
+        thumb.rotation.z = Math.PI / 4;
+        group.add(thumb);
+
+        return group;
+    }
+
+    // ─────────────────────────────────────────
+    // CORPO BAMBINO CON PROTESI
+    // ─────────────────────────────────────────
+    function createChildBody() {
+        const group = new THREE.Group();
+        const skinColor = 0xfcd7a0;
+        const shirtColor = 0x1e40af;
+        const neon = 0x38bdf8;
+
+        const skinMat = new THREE.MeshPhongMaterial({ color: skinColor, shininess: 30 });
+        const shirtMat = new THREE.MeshPhongMaterial({ color: shirtColor, shininess: 20 });
+        const metalMat = new THREE.MeshPhongMaterial({ color: 0x1e3a5f, shininess: 200, specular: 0x38bdf8 });
+        const accentMat = new THREE.MeshPhongMaterial({ color: neon, emissive: neon, emissiveIntensity: 0.3 });
+
+        // ─ TESTA ─
+        const headGeo = new THREE.SphereGeometry(0.38, 16, 16);
+        const head = new THREE.Mesh(headGeo, skinMat);
+        head.position.set(0, 2.85, 0);
+        group.add(head);
+
+        // Capelli
+        const hairGeo = new THREE.SphereGeometry(0.39, 16, 8, 0, Math.PI * 2, 0, Math.PI * 0.55);
+        const hairMat = new THREE.MeshPhongMaterial({ color: 0x3d1a00, side: THREE.DoubleSide });
+        const hair = new THREE.Mesh(hairGeo, hairMat);
+        hair.position.set(0, 2.85, 0);
+        group.add(hair);
+
+        // ─ COLLO ─
+        const neckGeo = new THREE.CylinderGeometry(0.1, 0.12, 0.2, 8);
+        const neck = new THREE.Mesh(neckGeo, skinMat);
+        neck.position.set(0, 2.4, 0);
+        group.add(neck);
+
+        // ─ TORSO ─
+        const torsoGeo = new THREE.BoxGeometry(0.85, 1.1, 0.45);
+        const torso = new THREE.Mesh(torsoGeo, shirtMat);
+        torso.position.set(0, 1.7, 0);
+        group.add(torso);
+
+        // Striscia su maglietta
+        const stripeGeo = new THREE.BoxGeometry(0.86, 0.08, 0.46);
+        const stripeMat = new THREE.MeshPhongMaterial({ color: neon, emissive: neon, emissiveIntensity: 0.2 });
+        const stripe = new THREE.Mesh(stripeGeo, stripeMat);
+        stripe.position.set(0, 1.85, 0);
+        group.add(stripe);
+
+        // ─ BRACCIO SINISTRO (normale) ─
+        const leftUpperGeo = new THREE.CylinderGeometry(0.1, 0.09, 0.55, 8);
+        const leftUpper = new THREE.Mesh(leftUpperGeo, shirtMat);
+        leftUpper.position.set(-0.55, 1.75, 0);
+        leftUpper.rotation.z = Math.PI / 10;
+        group.add(leftUpper);
+
+        const leftForeGeo = new THREE.CylinderGeometry(0.08, 0.07, 0.5, 8);
+        const leftFore = new THREE.Mesh(leftForeGeo, skinMat);
+        leftFore.position.set(-0.68, 1.28, 0);
+        leftFore.rotation.z = Math.PI / 8;
+        group.add(leftFore);
+
+        // Mano sinistra
+        const leftHandGeo = new THREE.SphereGeometry(0.09, 8, 8);
+        const leftHand = new THREE.Mesh(leftHandGeo, skinMat);
+        leftHand.position.set(-0.8, 1.02, 0);
+        group.add(leftHand);
+
+        // ─ BRACCIO DESTRO (PROTESI) ─
+        // Moncone
+        const stumpGeo = new THREE.CylinderGeometry(0.1, 0.09, 0.3, 8);
+        const stump = new THREE.Mesh(stumpGeo, shirtMat);
+        stump.position.set(0.52, 1.82, 0);
+        stump.rotation.z = -Math.PI / 10;
+        group.add(stump);
+
+        // Raccordo socket protesi
+        const socketGeo = new THREE.CylinderGeometry(0.12, 0.1, 0.15, 12);
+        const socket = new THREE.Mesh(socketGeo, accentMat);
+        socket.position.set(0.6, 1.62, 0);
+        socket.rotation.z = -Math.PI / 10;
+        group.add(socket);
+
+        // Protesi (versione semplificata integrata)
+        const prosGrp = createProsteticArm();
+        prosGrp.scale.set(0.45, 0.45, 0.45);
+        prosGrp.position.set(0.62, 1.58, 0);
+        prosGrp.rotation.z = -Math.PI / 10;
+        prosGrp.rotation.x = Math.PI * 0.05;
+        group.add(prosGrp);
+
+        // ─ BACINO ─
+        const pelvisGeo = new THREE.BoxGeometry(0.78, 0.28, 0.4);
+        const pelvisMat = new THREE.MeshPhongMaterial({ color: 0x1e3a5f });
+        const pelvis = new THREE.Mesh(pelvisGeo, pelvisMat);
+        pelvis.position.set(0, 1.07, 0);
+        group.add(pelvis);
+
+        // ─ SEDIA A ROTELLE STILIZZATA ─
+        // Seduta
+        const seatGeo = new THREE.BoxGeometry(0.9, 0.07, 0.7);
+        const seatMat = new THREE.MeshPhongMaterial({ color: 0x334155 });
+        const seat = new THREE.Mesh(seatGeo, seatMat);
+        seat.position.set(0, 0.88, 0.05);
+        group.add(seat);
+
+        // Schienale
+        const backGeo = new THREE.BoxGeometry(0.9, 0.7, 0.06);
+        const back = new THREE.Mesh(backGeo, seatMat);
+        back.position.set(0, 1.23, -0.32);
+        group.add(back);
+
+        // Telaio sedia
+        const frameMat = new THREE.MeshPhongMaterial({ color: 0x94a3b8, shininess: 200 });
+
+        // Ruote grandi (sx e dx)
+        [-0.5, 0.5].forEach(x => {
+            const wheelGeo = new THREE.TorusGeometry(0.38, 0.045, 8, 24);
+            const wheel = new THREE.Mesh(wheelGeo, frameMat);
+            wheel.position.set(x, 0.48, 0.05);
+            wheel.rotation.y = Math.PI / 2;
+            group.add(wheel);
+
+            // Raggi
+            for (let i = 0; i < 8; i++) {
+                const angle = (i / 8) * Math.PI * 2;
+                const spokeGeo = new THREE.BufferGeometry().setFromPoints([
+                    new THREE.Vector3(x, 0.48, 0.05),
+                    new THREE.Vector3(x, 0.48 + Math.sin(angle) * 0.38, 0.05 + Math.cos(angle) * 0.38)
+                ]);
+                group.add(new THREE.Line(spokeGeo, new THREE.LineBasicMaterial({ color: 0x64748b })));
+            }
+
+            // Cerchione esterno
+            const rimGeo = new THREE.TorusGeometry(0.38, 0.02, 6, 24);
+            const rimMat = new THREE.MeshPhongMaterial({ color: neon, emissive: neon, emissiveIntensity: 0.2 });
+            const rim = new THREE.Mesh(rimGeo, rimMat);
+            rim.position.set(x, 0.48, 0.05);
+            rim.rotation.y = Math.PI / 2;
+            group.add(rim);
+        });
+
+        // Ruotine anteriori
+        [-0.3, 0.3].forEach(x => {
+            const smallWheelGeo = new THREE.TorusGeometry(0.1, 0.03, 6, 16);
+            const sw = new THREE.Mesh(smallWheelGeo, frameMat);
+            sw.position.set(x, 0.2, 0.35);
+            sw.rotation.y = Math.PI / 2;
+            group.add(sw);
+        });
+
+        // Poggiapiedi
+        const footRestGeo = new THREE.BoxGeometry(0.7, 0.04, 0.18);
+        const footRest = new THREE.Mesh(footRestGeo, seatMat);
+        footRest.position.set(0, 0.32, 0.45);
+        group.add(footRest);
+
+        // ─ LED sul telaio sedia ─
+        [[-0.52, 0.48, 0.08], [0.52, 0.48, 0.08]].forEach(([x, y, z]) => {
+            const ledGeo = new THREE.SphereGeometry(0.04, 6, 6);
+            const ledMat = new THREE.MeshPhongMaterial({ color: neon, emissive: neon, emissiveIntensity: 3 });
+            const led = new THREE.Mesh(ledGeo, ledMat);
+            led.position.set(x, y, z);
+            led.userData = { isLed: true, offset: Math.random() * Math.PI };
+            group.add(led);
+        });
+
+        return group;
+    }
+
+    // ─────────────────────────────────────────
+    // PARTICELLE
+    // ─────────────────────────────────────────
+    function createParticles() {
+        const count = 300;
+        const geo = new THREE.BufferGeometry();
+        const pos = new Float32Array(count * 3);
+        for (let i = 0; i < count * 3; i++) pos[i] = (Math.random() - 0.5) * 40;
+        geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+        const mat = new THREE.PointsMaterial({ color: 0x38bdf8, size: 0.04, transparent: true, opacity: 0.4 });
+        scene.add(new THREE.Points(geo, mat));
+    }
+
+    // ─────────────────────────────────────────
+    // SCHEDULE FASI
+    // ─────────────────────────────────────────
+    function schedulePhases() {
+        // Fase 0 → 1: la scheda madre si gira e diventa braccio (dopo 4s)
+        setTimeout(() => {
+            phase = 1;
+            document.getElementById('phase-indicator').textContent = '// SISTEMA PROTESICO RILEVATO';
+            motherboardGroup.visible = false;
+            armGroup.visible = true;
+            armGroup.scale.set(0.01, 0.01, 0.01);
+            // Zoom della camera indietro lentamente
+            gsapLike(camera.position, { z: 8 }, 3000);
+            gsapLike(armGroup.scale, { x: 1, y: 1, z: 1 }, 1500);
+        }, 4500);
+
+        // Fase 1 → 2: braccio diventa parte del corpo (dopo altri 5s)
+        setTimeout(() => {
+            phase = 2;
+            document.getElementById('phase-indicator').textContent = '// INTEGRAZIONE COMPLETA';
+            armGroup.visible = false;
+            bodyGroup.visible = true;
+            bodyGroup.scale.set(0.01, 0.01, 0.01);
+            gsapLike(camera.position, { z: 14, y: 1 }, 4000);
+            gsapLike(bodyGroup.scale, { x: 1, y: 1, z: 1 }, 2000);
+
+            setTimeout(() => {
+                document.getElementById('final-text').classList.add('show');
+                document.getElementById('caption').classList.add('show');
+                document.getElementById('phase-indicator').textContent = '// PRESENTAZIONE ATTIVA';
+            }, 3000);
+        }, 10500);
+    }
+
+    // ─────────────────────────────────────────
+    // MINI TWEEN (senza librerie)
+    // ─────────────────────────────────────────
+    function gsapLike(obj, targets, duration) {
+        const start = {};
+        for (const k in targets) start[k] = obj[k];
+        const startTime = performance.now();
+        function tick() {
+            const t = Math.min((performance.now() - startTime) / duration, 1);
+            const ease = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+            for (const k in targets) obj[k] = start[k] + (targets[k] - start[k]) * ease;
+            if (t < 1) requestAnimationFrame(tick);
+        }
+        requestAnimationFrame(tick);
+    }
+
+    // ─────────────────────────────────────────
+    // LOOP DI ANIMAZIONE
+    // ─────────────────────────────────────────
+    function animate() {
+        animId = requestAnimationFrame(animate);
+        const t = clock.getElapsedTime();
+
+        // ─ Scheda madre: ruota e fluttua ─
+        if (motherboardGroup.visible) {
+            motherboardGroup.rotation.y = t * 0.6;
+            motherboardGroup.rotation.x = Math.sin(t * 0.4) * 0.2;
+            motherboardGroup.position.y = Math.sin(t * 0.8) * 0.1;
+
+            // LED blink
+            motherboardGroup.children.forEach(c => {
+                if (c.userData.isLed) {
+                    c.material.emissiveIntensity = 1 + Math.sin(t * 3 + c.userData.offset) * 0.8;
+                }
+            });
+        }
+
+        // ─ Braccio: respira e fluttua ─
+        if (armGroup.visible) {
+            armGroup.rotation.y = Math.sin(t * 0.5) * 0.4;
+            armGroup.position.y = Math.sin(t * 0.9) * 0.15;
+        }
+
+        // ─ Corpo: leggero dondolio ─
+        if (bodyGroup.visible) {
+            bodyGroup.rotation.y = Math.sin(t * 0.3) * 0.15;
+            bodyGroup.position.y = Math.sin(t * 0.6) * 0.05 - 1;
+            // LED sul corpo
+            bodyGroup.children.forEach(c => {
+                if (c.userData && c.userData.isLed) {
+                    c.material.emissiveIntensity = 2 + Math.sin(t * 2 + c.userData.offset) * 1;
+                }
+            });
+        }
+
+        renderer.render(scene, camera);
+    }
+
+    window.addEventListener('resize', () => {
+        if (!camera || !renderer) return;
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
     </script>
 </body>
 </html>
